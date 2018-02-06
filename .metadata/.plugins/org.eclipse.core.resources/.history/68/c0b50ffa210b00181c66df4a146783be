@@ -1,0 +1,48 @@
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/.
+// 
+
+module Node
+{
+    parameters:
+        int nid;
+
+        @display("bgb=273,87;bgl=2");
+    gates:
+        input inG;
+        output outG;
+
+    submodules:
+        AL: App_layer {
+            id = nid;
+            @display("p=30,40");
+        }
+        DL: Dl_layer {
+            id = nid;
+            @display("p=119,40");
+        }
+        PL: P_layer {
+            id = nid;
+            @display("p=211,40");
+        }
+
+    connections:
+        AL.toDL --> DL.fromAL;
+        AL.fromDL <-- DL.toAL;
+        DL.toPL --> PL.fromDL;
+        DL.fromPL <-- PL.toDL;
+//        PL.toNode --> outG;
+//        inG --> PL.fromNode;
+
+}

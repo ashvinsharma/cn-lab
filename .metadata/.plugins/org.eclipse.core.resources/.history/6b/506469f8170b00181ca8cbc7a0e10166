@@ -1,0 +1,78 @@
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/.
+// 
+
+#include "dl_layer.h"
+
+Define_Module(Dl_layer);
+
+void Dl_layer::initialize()
+{
+    fromAL = gate("fromAL");
+    fromPL = gate("fromPL");
+    toAL = gate("toAL");
+    toPL = gate("toPL");
+    addr = par("id");
+}
+
+void Dl_layer::handleMessage(cMessage *msg)
+{
+    if(msg->getArrivalGate() == fromAL)
+    {
+        A_PDU* prev_msg = check_and_cast<A_PDU*>(msg);
+        DL_PDU* new_msg = new DL_PDU();
+
+        new_msg->encapsulate(prev_msg);
+        new_msg->setType(prev_msg->getType());
+        new_msg->setPid(prev_msg->getPid()%2);
+        send(new_msg, toPL);
+        EV << "Data is sent DL --> PL";
+    }
+    else if(msg->getArrivalGate() == fromPL)
+    {
+        DL_PDU* prev_msg = check_and_cast<DL_PDU*>(msg);
+
+        EV << "Packet type for message sent from DL = " << prev_msg->getType() << endl;
+        //sends acknowledgment to other DL layer and data to Application Layer
+        if(prev_msg->getType() == 0) // 0 for data
+        {
+            //sends data to upper Application layer
+            A_PDU* new_msg = new A_PDU();
+            new_msg = check_and_cast<A_PDU*>(prev_msg->decapsulate());
+            send(new_msg, toAL);
+            EV << "Message is sent DL --> PL ";
+
+            //sends ack to corresponding DL layer on other node
+            DL_PDU* ack = new DL_PDU();
+            ack->setPid((prev_msg->getPid() + 1) % 2);
+            ack->setSrc(2);
+            ack->setDest(1);
+            ack->setType(1); //ack
+            send(ack, toPL);
+            EV << "Ack is sent to PL";
+        } else if(prev_msg->getType() == 1 && addr == 1) // for ack
+        {
+            EV<<"if it shows in node 1 there is some problem";
+            DL_PDU* ack = new DL_PDU();
+            ack->setPid((prev_msg->getPid() + 1) % 2);
+            ack->setSrc(1);
+            ack->setDest(2);
+            ack->setType(1); //ack
+            send(ack, toPL);
+            EV << "Ack is sent to PL";
+        }
+        delete prev_msg;
+    }
+
+}

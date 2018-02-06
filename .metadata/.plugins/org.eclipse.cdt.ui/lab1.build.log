@@ -1,0 +1,6 @@
+15:53:47 **** Clean-only build of configuration release for project lab1 ****
+make MODE=release clean 
+Cleaning lab1.exe
+
+15:53:49 Build Finished (took 2s.767ms)
+
